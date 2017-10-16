@@ -1,6 +1,7 @@
 # LARENE
 Game for the Network project
-![LARENE](https://raw.githubusercontent.com/Romain-B/LARENE/img/Larene.png)
+
+![LARENE](https://raw.githubusercontent.com/Romain-B/LARENE/master/img/Larene.png)
 
 ## For the local version
 Just go to the folder in terminal and execute `python LARENE.py`
