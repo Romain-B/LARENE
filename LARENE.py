@@ -311,7 +311,7 @@ class Level(object):
         self.player = player
          
         # Background image
-        self.background = None
+        self.background = pygame.image.load('img/LareneBG.png')#None
 
         level = lvl 
  
