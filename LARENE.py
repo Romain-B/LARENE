@@ -17,12 +17,15 @@ SOUND = True
 
 # Colors
 BLACK = (0, 0, 0)
+GREY = (50,50,50)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 PINK = (255, 20, 147)
 YELLOW = (255,255,0)
+PURPLE = (148,0,211)
+ORANGE = (255,132,0)
  
 # Screen dimensions
 # SCREEN_WIDTH2 = 1920
@@ -62,11 +65,12 @@ DEFAULT_SPAWNPOINTS = [(200, 160), (820, 160), (200, 400), (820, 400)]
  
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, pname, pcol, nb, sprite=False):
+    def __init__(self, pname, pcol, nb, sprite=False, cit = ''):
 
         super(Player, self).__init__()
  
         self.name = pname
+        self.cit = cit
         self.col = pcol
 
         self.lives = 3
@@ -311,7 +315,7 @@ class Level(object):
         self.player = player
          
         # Background image
-        self.background = pygame.image.load('img/LareneBG.png')#None
+        self.background = None#pygame.image.load('img/LareneBG.png')#None
 
         level = lvl 
  
@@ -470,7 +474,7 @@ def give_nplayers(final_screen, size):
         pygame.display.flip()
     return n
 
-def menu(final_screen, size, all_characters, nplayers, all_kb):
+def old_menu(final_screen, size, all_characters, nplayers, all_kb):
     screen = pygame.Surface([SCREEN_WIDTH, SCREEN_HEIGHT])
     clock = pygame.time.Clock()
 
@@ -514,6 +518,7 @@ def menu(final_screen, size, all_characters, nplayers, all_kb):
             col = all_characters[j].col
             textname = font.render(all_characters[j].name, False, col)
             textrect = textname.get_rect()
+            
             if j == i :
 
                 a_rect = pygame.Surface((textrect.width+2*(width+padding),textrect.height+2*(width+padding)))
@@ -544,6 +549,108 @@ def menu(final_screen, size, all_characters, nplayers, all_kb):
         pygame.display.flip()
 
     return chosen
+
+
+def menu(final_screen, size, all_characters, nplayers, all_kb):
+    screen = pygame.Surface([SCREEN_WIDTH, SCREEN_HEIGHT])
+    clock = pygame.time.Clock()
+
+    totalp = len(all_characters)
+
+    width = 3
+    padding = 2
+    dist_from_top = int(0.323*SCREEN_HEIGHT) +10*UNIT
+    startleft = SCREEN_WIDTH/2-(totalp/2)*4*UNIT
+    flushleft = 10*UNIT
+    arn = pygame.image.load('./img/Larene.png')
+
+
+    font = pygame.font.SysFont('liberationsans', 2*UNIT)
+    font.set_bold(True)
+
+    chosen = {}
+    i = 0
+    while len(chosen)<nplayers :
+        screen.fill(BLACK)
+        screen.blit(pygame.transform.scale(arn, (SCREEN_HEIGHT, int(0.323*SCREEN_HEIGHT))), ((SCREEN_WIDTH-SCREEN_HEIGHT)/2, UNIT*4))
+
+        c = len(chosen)
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == all_kb[c][1]:
+                    i -= 1
+                if event.key == all_kb[c][2]:
+                    i += 1
+                if event.key == all_kb[c][3]:
+                    if i not in chosen.values():
+                        chosen[c]=i
+                    
+                if event.key == EXIT_KEY:
+                    sys.exit()
+            if event.type == pygame.QUIT :
+                sys.exit()
+
+
+        if i < 0 : i = totalp-1
+        if i >= totalp : i = 0
+        
+        for j in range(totalp) :
+            second_row = 0
+            jp = j
+
+            if j >= totalp/2:
+                second_row = 8*UNIT
+                jp -= totalp/2
+
+            col = all_characters[j].col
+            textname = font.render(all_characters[j].name, False, col)
+            textrect = textname.get_rect()
+            imsurf = pygame.Surface([6*UNIT, 6*UNIT])
+
+            imsurf.blit(pygame.transform.scale(all_characters[j].sprite_save, [3*UNIT, 6*UNIT]), (int(1.5*UNIT),0))
+            imrect = imsurf.get_rect()
+            textcit = font.render('"'+all_characters[j].cit+'"', False, col)
+            citrect = textcit.get_rect()
+            if j == i :
+
+                a_rect = pygame.Surface((imrect.width+2*(width+padding),imrect.height+2*(width+padding)))
+                a_rect.fill(col)
+                block_rect = pygame.Surface((imrect.width+2*padding, imrect.height+2*padding))
+                block_rect.fill(BLACK)
+
+                screen.blit(a_rect, (startleft+jp*8*UNIT-(width+padding), dist_from_top-(width+padding)+second_row))
+                screen.blit(block_rect, (startleft+jp*8*UNIT-padding, dist_from_top-padding + second_row))
+
+
+                screen.blit(textname, (SCREEN_WIDTH/2-textrect.width/2,  dist_from_top-4*UNIT))
+                screen.blit(textcit, (SCREEN_WIDTH/2-citrect.width/2,  dist_from_top+18*UNIT))
+
+            screen.blit(imsurf, (startleft+8*UNIT*jp, dist_from_top + second_row))
+
+            if j in chosen.values():
+                textplay = font.render("P"+str(1+chosen.values().index(j)), False, col)
+                darken = pygame.Surface([6*UNIT, 6*UNIT])
+                darken.fill(BLACK)
+                darken.set_alpha(180)
+
+                screen.blit(darken, (startleft+8*UNIT*jp, dist_from_top + second_row))
+                screen.blit(pygame.transform.scale(textplay, [6*UNIT, 6*UNIT]), (startleft+8*UNIT*jp, dist_from_top + second_row))
+
+
+
+
+        final_screen.blit(pygame.transform.scale(screen, size), (0,0))
+        # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
+ 
+        # Limit to 60 frames per second
+        clock.tick(60)
+ 
+        # Go ahead and update the screen with what we've drawn.
+        pygame.display.flip()
+
+    return chosen
+
+
 
 def load_levels(filename):
 
@@ -594,13 +701,16 @@ def inits():
 
 def load_characters():
     #Create characters
-    char1 = Player('Gwendal', RED, 0, sprite='./img/gwendal.png')
-    char2 = Player(u'El Péhème', BLUE, 1, sprite='./img/elpeheme.png')
-    char3 = Player('Huberr', GREEN, 1, sprite='./img/huberr.png')
-    char4 = Player('Bastien', PINK, 2, sprite='./img/bastien.png')
-    char5 = Player('Mr.Punchline', YELLOW, 0, sprite='./img/mrpunchline.png')
+    char1 = Player('Gwendal', RED, 0, sprite='./img/gwendal.png', cit="GwendaaaaaaAAAAAAaaaaal !!")
+    char2 = Player(u'El Péhème', BLUE, 1, sprite='./img/elpeheme.png', cit=u"On va les éclater, et quand je dis on, c'est plutôt moi..." )
+    char3 = Player('Huberr', GREEN, 1, sprite='./img/huberr.png', cit = u"Je pense qu'on sait pas trop encore qui va gagner")
+    char4 = Player('Bastien', PINK, 2, sprite='./img/bastien.png', cit = u"GroOmpF !")
+    char5 = Player('Mr.Punchline', YELLOW, 0, sprite='./img/mrpunchline.png', cit=u"L'ARENE est une aventure dont on ne sort pas vivant.")
+    char6 = Player('Superdev', PURPLE, 0, sprite='./img/supdev.png', cit=u"You don't fuck with the Super Developper")
+    char7 = Player(u"L'Abbé Dai", ORANGE, 0, sprite='./img/ACP.png', cit=u"L'Abbé Dai est ACPté.")
+    charNo = Player('NOPLAYER', WHITE, 0, sprite='./img/noplayer.png')
 
-    return [char1, char2, char3, char4, char5]
+    return [char1, char2, char3, char4, char5, char6, char7, charNo, charNo, charNo]
 
 
 
@@ -637,7 +747,7 @@ def main():
     infoObject = pygame.display.Info()
     size = (int(infoObject.current_w), int(infoObject.current_h))
 
-    final_screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
+    final_screen = pygame.display.set_mode(size)#, pygame.FULLSCREEN)
     screen = pygame.Surface([SCREEN_WIDTH,SCREEN_HEIGHT])
  
     pygame.display.set_caption("L'ARENE")
