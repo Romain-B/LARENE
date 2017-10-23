@@ -706,7 +706,7 @@ def load_characters():
     char3 = Player('Huberr', GREEN, 1, sprite='./img/huberr.png', cit = u"Je pense qu'on sait pas trop encore qui va gagner")
     char4 = Player('Bastien', PINK, 2, sprite='./img/bastien.png', cit = u"GroOmpF !")
     char5 = Player('Mr.Punchline', YELLOW, 0, sprite='./img/mrpunchline.png', cit=u"L'ARENE est une aventure dont on ne sort pas vivant.")
-    char6 = Player('Superdev', PURPLE, 0, sprite='./img/supdev.png', cit=u"You don't fuck with the Super Developper")
+    char6 = Player('Superdev', PURPLE, 1, sprite='./img/supdev.png', cit=u"You don't fuck with the Super Developper")
     char7 = Player(u"L'Abbé Dai", ORANGE, 0, sprite='./img/ACP.png', cit=u"L'Abbé Dai est ACPté.")
     charNo = Player('NOPLAYER', WHITE, 0, sprite='./img/noplayer.png')
 
@@ -745,7 +745,7 @@ def main():
 
     #Get display size of monitor
     infoObject = pygame.display.Info()
-    size = (int(infoObject.current_w), int(infoObject.current_h))
+    size = (int(infoObject.current_w), int(infoObject.current_h-80))
 
     final_screen = pygame.display.set_mode(size)#, pygame.FULLSCREEN)
     screen = pygame.Surface([SCREEN_WIDTH,SCREEN_HEIGHT])
