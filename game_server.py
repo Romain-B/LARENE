@@ -7,8 +7,11 @@ from socket import *
 import time
 import sys
 import cPickle as pickle
+from random import randint
 
 BUFFER = 100
+NB_LEVELS = 3
+NB_SPAWNS = 4
 
 class Server(object):
   """Network server object for LARENE"""
@@ -31,7 +34,7 @@ class Server(object):
 
     self.players = [None]*self.nb_players
     self.player_UDPdata = [None]*self.nb_players
-    self.events = []
+    self.events = ['']*self.nb_players
 
     self.TCPsock = socket(AF_INET, SOCK_STREAM)
     self.UDPsock = [socket(AF_INET, SOCK_DGRAM) for _ in range(self.nb_players)]
@@ -42,9 +45,9 @@ class Server(object):
       s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1) 
 
 
-    self.clients = {}
-    # self.u_threads = []
-    # self.t_threads = []
+    self.clients = []
+    self.lvl_done = False
+
     self.stop = False
 
 
@@ -77,21 +80,23 @@ class Server(object):
         s.sendto('OK', UDPaddr)
         
         #SAVE CLIENT
-        self.clients[i+1] = (client, s, UDPaddr)
+        self.clients.append((client, s, UDPaddr))
         i+=1
 
    
       
       for i in range(self.nb_players):
-        threading.Thread(target= self.TCP_handler, args = (self.clients[i+1][0], i+1)).start()
-        threading.Thread(target= self.UDP_handler, args = (self.clients[i+1][1], self.clients[i+1][2], i+1)).start()
+        threading.Thread(target= self.TCP_handler, args = (self.clients[i][0], i+1)).start()
+        threading.Thread(target= self.UDP_handler, args = (self.clients[i][1], self.clients[i][2], i+1)).start()
 
-
+      self.TCP_broadcast("Go")
+      self.start_level()
+      threading.Thread(target= self.gameloop, args=()).start()
       #self.char_select()
       #self.launch()
 
     except error as e:
-      for c in self.clients.values():
+      for c in self.clients:
         c[0].close()
         c[1].close()
       
@@ -100,7 +105,35 @@ class Server(object):
       sys.exit()
 
   def gameloop(self):
-    pass
+    while True:
+
+      #Data send back to all clients
+      data = self.player_UDPdata
+      evts = self.events
+
+      #Reset event array since events will be sent now
+      self.events = []
+      evts_string = [str(evts[i])+',' for i in range(self.nb_players)]
+      evts_string = str(evts_string[:-1])
+
+
+      tosend = str(time.time())+';'+evts_string+';'+str(randint(0, NB_SPAWNS))+';'
+      self.UDP_broadcast(tosend)
+      
+
+
+  def start_level(self):
+    level_num = randint(0, NB_LEVELS-1)
+    spawns = [randint(0, NB_SPAWNS-1) for _ in range(self.nb_players)]
+
+    data = str(level_num)
+
+    for s in spawns:
+      data += ','+str(s)
+
+    self.TCP_broadcast(data)
+    self.lvl_done = False
+
 
 
   def TCP_broadcast(self, data):
@@ -108,13 +141,18 @@ class Server(object):
       c[0].send(data)
 
   def UDP_broadcast(self, data):
+    i=0
     for c in self.clients:
-      self.UDPsock.sendto(data, c[2])
+      self.UDPsock[i].sendto(data, c[2])
+      i+=1
 
 
   def TCP_handler(self, client, p_id):
     while not self.stop:
       data = client.recv(BUFFER)
+      if data == "lvl_done" and self.lvl_done == False:
+        self.start_level()
+        self.lvl_done = True
 
       #dostuff
 
@@ -124,14 +162,19 @@ class Server(object):
       data = data.split(';')
       p_id = int(data[0])
 
-      evts = data[1].split(',')
-      self.events += evts
-      self.player_UDPdata[p_id-1] = data[2:]
+      print p_id, data
 
+      self.events[p_id-1] = data[1]
+      #self.player_UDPdata[p_id-1] = data[2:]
+
+  
   def close(self):
-    for c in self.clients.values():
+    for c in self.clients:
         c[0].close()
         c[1].close()
     self.stop = True
 
 
+if __name__ == '__main__':
+  s = Server('', 12345,2)
+  s.start_server()

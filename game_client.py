@@ -24,6 +24,7 @@ class Client(object):
 
     self.level_end = True       
     self.last_time = 0         #Last time indicated on packet (to ensure we only keep latest data)
+    self.worldinfo = []
     self.server_worldinfo = [] #Player positions and lives
     self.event_info = []       #List of events (for sound cues mainly)
 
@@ -51,6 +52,11 @@ class Client(object):
     self.player_id = int(basic_info[0])
     self.nb_players = int(basic_info[1])
 
+    #Wait for the other players
+    Go = self.recv_TCP()
+
+
+    #UDP data receiving thread
     threading.Thread(target=self.worldinfo_handler, args=()).start()
 
 
@@ -78,14 +84,13 @@ class Client(object):
     #TCP for safety
     data = self.recv_TCP()
     
-    #data format : level_num, p1_spawnx, p1_spawny, p2_spawnx, p2_spawny...
+    #data format : level_num, p1_spawn_nb, p2_spawn_nb, ...
     data = data.split(',')
 
-    level_num = data[0]
+    level_num = int(data[0])
     spawns = []
     for i in range(self.nb_players):
-      j=i*2+1
-      spawns.append((data[j], data[j+1]))
+      spawns.append(int(data[i]))
 
     # To restart the main game loop data listener
     self.level_end = False 
@@ -99,20 +104,26 @@ class Client(object):
         data = self.recv_UDP()
         data = data.split(';')
 
-        time = int(data[0])
+        time = float(data[0])
 
         #If the packet is the latest data (UDP can send be received in wrong order)
         if time > self.last_time :
           self.last_time = time
 
           event_info = data[1].split(',')
+          
+          self.worldinfo = map(int, data[2].split(','))
+
           player_info = []
 
-          for i in range(self.nb_players):
-            player_info.append(map(int, data[i+2].split(',')))
+          # for i in range(self.nb_players):
+          #   player_info.append(map(int, data[i+3].split(',')))
 
           self.server_worldinfo = player_info
           self.event_info = event_info
+        else :
+          self.send_TCP("lvl_done")
+
 
   def send_playerinfo(self, p_coord, p_lives, events):
 
@@ -123,6 +134,11 @@ class Client(object):
 
     self.send_UDP(data)
 
+  def send_playerinfo_naive(self, events):
+
+    data = str(self.player_id)+';'+events
+
+    self.send_UDP(data)
 
 
 
