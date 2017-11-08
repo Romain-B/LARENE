@@ -797,7 +797,7 @@ def main():
     infoObject = pygame.display.Info()
     size = (int(infoObject.current_w), int(infoObject.current_h-80))
 
-    final_screen = pygame.display.set_mode(size)#, pygame.FULLSCREEN)
+    final_screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
     screen = pygame.Surface([SCREEN_WIDTH,SCREEN_HEIGHT])
  
     pygame.display.set_caption("L'ARENE")
