@@ -26,10 +26,10 @@ PINK = (255, 20, 147)
 YELLOW = (255,255,0)
 PURPLE = (148,0,211)
 ORANGE = (255,132,0)
+BROWN = (180, 115, 40)
  
 # Screen dimensions
-# SCREEN_WIDTH2 = 1920
-# SCREEN_HEIGHT2 = 1080
+
 SCREEN_WIDTH = int(800*1.2)
 SCREEN_HEIGHT = int(600*1.2)
 
@@ -50,7 +50,7 @@ EXIT_KEY = pygame.K_ESCAPE
 
 
 
-#                 #Width, height, top left x, top left y.
+                #Width, height, top left x, top left y.
 DEFAULT_LVL =   [
                   [200, UNIT, 120, 190],
                   [200, UNIT, 120, 440],
@@ -63,6 +63,53 @@ DEFAULT_LVL =   [
 DEFAULT_SPAWNPOINTS = [(200, 160), (820, 160), (200, 400), (820, 400)]
 
  
+#Event codes
+LEFT = 'l'
+RIGHT = 'r'
+LEFT_KUP = 'm'
+RIGHT_KUP = 'n'
+
+JUMP = 'j'
+SHOOT = 's'
+RESET = 'x'
+
+
+class SoundLibrary(object):
+    """docstring for SoundLibrary"""
+    def __init__(self):
+        self.sounds = []
+
+
+    def load_sounds(self):
+        pygame.mixer.music.load('./sound_fx/bg_music.wav')
+        pygame.mixer.music.play(-1)
+
+        G1 = pygame.mixer.Sound('./sound_fx/grunt1.ogg')
+        G2 = pygame.mixer.Sound('./sound_fx/grunt2.ogg')
+        G2.set_volume(0.6)
+        G3 = pygame.mixer.Sound('./sound_fx/grunt3.ogg')
+        NOO = pygame.mixer.Sound('./sound_fx/nooo.ogg')
+        NOO.set_volume(0.3)
+        PEW = pygame.mixer.Sound('./sound_fx/pew.ogg')
+
+        PREPARE = [pygame.mixer.Sound('./sound_fx/prepare.ogg'), pygame.mixer.Sound('./sound_fx/prepare2.ogg'), pygame.mixer.Sound('./sound_fx/prepare3.ogg')]
+        WINNER = pygame.mixer.Sound('./sound_fx/winner.ogg')
+
+        self.sounds =  [G1,                 #0
+                        G2,                 #1
+                        G3,                 #2
+                        NOO,                #3
+                        PEW,                #4
+                        PREPARE[0],         #5
+                        PREPARE[1],         #6
+                        PREPARE[2],         #7
+                        WINNER              #8
+                        ]
+    def play(self, i, s=True):
+        if s == True and SOUND == True :
+            self.sounds[i].play()
+        
+
 class Player(pygame.sprite.Sprite):
 
     def __init__(self, pname, pcol, nb, sprite=False, cit = ''):
@@ -218,17 +265,15 @@ class Player(pygame.sprite.Sprite):
         else:
             self.change_y += GRAVITY
  
-        # # See if we are on the ground.
-        # if self.rect.y >= SCREEN_HEIGHT - self.rect.height and self.change_y >= 0:
-        #     self.change_y = 0
-        #     self.rect.y = SCREEN_HEIGHT - self.rect.height
  
-    def jump(self, s):
+    def jump(self):
         """ Called when user hits 'jump' button. """
  
         # move down a bit and see if there is a platform below us.
         # Move down 2 pixels because it doesn't work well if we only move down
         # 1 when working with a platform moving down.
+        playsound = False
+
         self.rect.y += 2
         platform_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
         self.rect.y -= 2
@@ -237,10 +282,12 @@ class Player(pygame.sprite.Sprite):
         if len(platform_hit_list) > 0 or self.doublejump == False: 
             self.change_y = -10
             self.doublejump = True
-            s.play()
+            playsound = True
 
         if len(platform_hit_list) > 0 : 
             self.doublejump = False
+
+        return playsound
 
     def die(self, spawn):
         self.lives -= 1
@@ -251,10 +298,12 @@ class Player(pygame.sprite.Sprite):
             self.change_y = 0
             self.last_death = pygame.time.get_ticks()
 
-    def shoot(self, s):
+    def shoot(self):
         if len(self.bullets) <=2:
             self.bullets.append(Bullet(self))
-            s.play()
+            #play the sound
+            return True
+        return False
  
 
     # Player-controlled movement:
@@ -315,7 +364,7 @@ class Level(object):
         self.player = player
          
         # Background image
-        self.background = None#pygame.image.load('img/LareneBG.png')#None
+        self.background = None
 
         level = lvl 
  
@@ -380,10 +429,10 @@ def print_score(screen, myfont, players, crown):
         textscore = myfont.render("Score : "+str(p.score), False, WHITE)
         screen.blit(textscore, (UNIT+i*150 +i*3*UNIT +4*UNIT, 7*UNIT))
         screen.blit(pygame.transform.scale(p.sprite_save, (2*UNIT, 4*UNIT)), (UNIT+i*150+i*3*UNIT, 2*UNIT))
-        #+"\n Lives : "+str(p.lives)+"\n Score : "+str(p.score)
+
         scores.append(p.score)
         i += 1
-    if max(scores) >0:    
+    if max(scores) > 0:    
         winning = scores.index(max(scores))
         screen.blit(pygame.transform.scale(crown, (int(1.5*UNIT),int(1.5*UNIT))), (int(0.4*UNIT)+winning*150+winning*3*UNIT, int(1.1*UNIT)) )
 
@@ -396,9 +445,8 @@ def print_pnames(screen, myfont, players):
         textrect = textname.get_rect()
         screen.blit(textname, (p.rect.x-textrect.width/2, p.rect.y-2*UNIT))
 
-def rematch(players, level, spawns, active_sprite_list, FIGHT):
+def rematch(players, level, spawns, active_sprite_list):
     #rematch setup
-    FIGHT.play()
     for p in players :
         p.level = level
         spawn = spawns[randint(0,len(spawns)-1)]
@@ -470,85 +518,9 @@ def give_nplayers(final_screen, size):
         # Limit to 60 frames per second
         clock.tick(60)
  
-        # Go ahead and update the screen with what we've drawn.
+        # Update the screen
         pygame.display.flip()
     return n
-
-def old_menu(final_screen, size, all_characters, nplayers, all_kb):
-    screen = pygame.Surface([SCREEN_WIDTH, SCREEN_HEIGHT])
-    clock = pygame.time.Clock()
-
-    width = 3
-    padding = 2
-    dist_from_top = int(0.323*SCREEN_HEIGHT) +10*UNIT
-    flushleft = 10*UNIT
-    arn = pygame.image.load('./img/Larene.png')
-
-
-    font = pygame.font.SysFont('liberationsans', 2*UNIT)
-    font.set_bold(True)
-
-    chosen = {}
-    i = 0
-    while len(chosen)<nplayers :
-        screen.fill(BLACK)
-        screen.blit(pygame.transform.scale(arn, (SCREEN_HEIGHT, int(0.323*SCREEN_HEIGHT))), ((SCREEN_WIDTH-SCREEN_HEIGHT)/2, UNIT*4))
-
-        c = len(chosen)
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == all_kb[c][1]:
-                    i -= 1
-                if event.key == all_kb[c][2]:
-                    i += 1
-                if event.key == all_kb[c][3]:
-                    if i not in chosen.values():
-                        chosen[c]=i
-                    
-                if event.key == EXIT_KEY:
-                    sys.exit()
-            if event.type == pygame.QUIT :
-                sys.exit()
-
-
-        if i < 0 : i = len(all_characters)-1
-        if i >= len(all_characters) : i = 0
-        
-        for j in range(len(all_characters)) :
-            col = all_characters[j].col
-            textname = font.render(all_characters[j].name, False, col)
-            textrect = textname.get_rect()
-            
-            if j == i :
-
-                a_rect = pygame.Surface((textrect.width+2*(width+padding),textrect.height+2*(width+padding)))
-                a_rect.fill(col)
-                block_rect = pygame.Surface((textrect.width+2*padding, textrect.height+2*padding))
-                block_rect.fill(BLACK)
-
-                screen.blit(a_rect, (SCREEN_WIDTH/2+UNIT-(width+padding)-flushleft, dist_from_top-(width+padding)+j*(4*UNIT)))
-                screen.blit(block_rect, (SCREEN_WIDTH/2+UNIT-padding-flushleft, dist_from_top-padding + j*(4*UNIT)))
-
-
-            screen.blit(textname, (SCREEN_WIDTH/2+UNIT-flushleft,  dist_from_top + j*(4*UNIT)))
-
-            if j in chosen.values():
-                textplay = font.render("P"+str(1+chosen.values().index(j)), False, col)
-                screen.blit(textplay, (SCREEN_WIDTH/2-4*UNIT-flushleft,  dist_from_top + j*(4*UNIT)))
-
-
-
-
-        final_screen.blit(pygame.transform.scale(screen, size), (0,0))
-        # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
- 
-        # Limit to 60 frames per second
-        clock.tick(60)
- 
-        # Go ahead and update the screen with what we've drawn.
-        pygame.display.flip()
-
-    return chosen
 
 
 def menu(final_screen, size, all_characters, nplayers, all_kb):
@@ -645,7 +617,7 @@ def menu(final_screen, size, all_characters, nplayers, all_kb):
         # Limit to 60 frames per second
         clock.tick(60)
  
-        # Go ahead and update the screen with what we've drawn.
+        # Update the screen 
         pygame.display.flip()
 
     return chosen
@@ -689,6 +661,7 @@ def load_keybinds(filename):
         keybinds.append(kb)
     return keybinds
 
+
 def inits():
     #pygame inits
     if SOUND == True:
@@ -698,6 +671,7 @@ def inits():
     
     if SOUND == True:
         pygame.mixer.init()
+    return SoundLibrary()
 
 def load_characters():
     #Create characters
@@ -708,32 +682,57 @@ def load_characters():
     char5 = Player('Mr.Punchline', YELLOW, 0, sprite='./img/mrpunchline.png', cit=u"L'ARENE est une aventure dont on ne sort pas vivant.")
     char6 = Player('Superdev', PURPLE, 1, sprite='./img/supdev.png', cit=u"You don't fuck with the Super Developper")
     char7 = Player(u"L'Abbé Dai", ORANGE, 0, sprite='./img/ACP.png', cit=u"L'Abbé Dai est ACPté.")
+    char8 = Player("Blatteman", BROWN, 0, sprite='./img/blatteman.png', cit=u"Le seul VRAI habitant de la cave...")
     charNo = Player('NOPLAYER', WHITE, 0, sprite='./img/noplayer.png')
 
-    return [char1, char2, char3, char4, char5, char6, char7, charNo, charNo, charNo]
+    return [char1, char2, char3, char4, char5, char6, char7, char8, charNo, charNo]
+
+
+def get_events(player, key_evs, alive, match_done, done):
+    events = ''
+    for event in key_evs:
+            if event.type == pygame.QUIT:
+                done = True
+            if event.type == pygame.KEYDOWN :
+                if alive :
+                    if match_done == False:
+                        if event.key == player.kb[1]:
+                            events += LEFT
+                            
+                        if event.key == player.kb[2]:
+                            events += RIGHT
+
+                        if event.key == player.kb[0]:
+                            events += JUMP
+                           
+                        if event.key == player.kb[3]:
+                            events += SHOOT
+                
+                if event.key == EXIT_KEY:
+                    done = True 
+                if event.key == RESET_KEY:
+                    events += RESET
+                    # reset = True
+ 
+            if event.type == pygame.KEYUP:
+
+                if event.key == player.kb[1]:
+                    events += LEFT_KUP
+                if event.key == player.kb[2]:
+                    events += RIGHT_KUP
+    return (events, done)
 
 
 
 def main():
     """ Main Program """
 #Pygame inits
-    inits()
+    SL = inits()
 
 #AUDIO
     if SOUND == True:
-        pygame.mixer.music.load('./sound_fx/bg_music.wav')
-        pygame.mixer.music.play(-1)
+        SL.load_sounds()
 
-        G1 = pygame.mixer.Sound('./sound_fx/grunt1.ogg')
-        G2 = pygame.mixer.Sound('./sound_fx/grunt2.ogg')
-        G2.set_volume(0.6)
-        G3 = pygame.mixer.Sound('./sound_fx/grunt3.ogg')
-        NOO = pygame.mixer.Sound('./sound_fx/nooo.ogg')
-        NOO.set_volume(0.3)
-        PEW = pygame.mixer.Sound('./sound_fx/pew.ogg')
-
-        PREPARE = [pygame.mixer.Sound('./sound_fx/prepare.ogg'), pygame.mixer.Sound('./sound_fx/prepare2.ogg'), pygame.mixer.Sound('./sound_fx/prepare3.ogg')]
-        WINNER = pygame.mixer.Sound('./sound_fx/winner.ogg')
 #FONTS
     myfont = pygame.font.SysFont('liberationsans', 2*UNIT)
     winfont = pygame.font.SysFont('liberationsans', 6*UNIT)
@@ -747,7 +746,7 @@ def main():
     infoObject = pygame.display.Info()
     size = (int(infoObject.current_w), int(infoObject.current_h-80))
 
-    final_screen = pygame.display.set_mode(size)#, pygame.FULLSCREEN)
+    final_screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
     screen = pygame.Surface([SCREEN_WIDTH,SCREEN_HEIGHT])
  
     pygame.display.set_caption("L'ARENE")
@@ -790,7 +789,7 @@ def main():
     active_sprite_list = pygame.sprite.Group()
 
     #Sound
-    PREPARE[randint(0,len(PREPARE)-1)].play()
+    SL.play(randint(5,7))
 
     for p in players :
         # Set the current level
@@ -804,7 +803,7 @@ def main():
      
 
  
-    # Loop until the user clicks the close button.
+    # Loop until user clicks close button or presses ESC
     done = False
     match_done = False
     win = 0
@@ -819,54 +818,63 @@ def main():
  
     # -------- Main Program Loop -----------
     while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
- 
-            for p in [players[index] for index in alive_players]:
-                if event.type == pygame.KEYDOWN:
-                    if match_done == False:
-                        if event.key == p.kb[1]:
-                            p.go_left()
-                        if event.key == p.kb[2]:
-                            p.go_right()
-                        if event.key == p.kb[0]:
-                            if p.pnumber == 0:
-                                p.jump(G1)
-                            if p.pnumber == 1:
-                                p.jump(G2)
-                            if p.pnumber == 2:
-                                p.jump(G3)
-                        if event.key == p.kb[3]:
-                            p.shoot(PEW)
+        
+        all_events = []
+        key_events = pygame.event.get()
 
-                    if event.key == EXIT_KEY:
-                        done = True
-                    if event.key == RESET_KEY:
-                        reset = True
-     
-                if event.type == pygame.KEYUP:
+        #Get the events
 
-                    if event.key == p.kb[1] and p.change_x < 0:
-                        p.stop()
-                    if event.key == p.kb[2] and p.change_x > 0:
-                        p.stop()
- 
-        # Update the player.
+        for i in range(nplayers):
+            p = players[i]
+            if i in alive_players:
+                alive = True
+            else : 
+                alive = False
+            events, done = get_events(p, key_events, alive, match_done, done)
+            all_events.append(events)
+
+        #Apply/Interpret the events
+
+        for i in range(nplayers):
+            p = players[i]
+
+            for action in all_events[i] :
+                if action == LEFT:
+                    p.go_left()
+                if action == RIGHT:
+                    p.go_right()
+                if action == JUMP:
+                    s = p.jump()
+                    SL.play(p.pnumber, s=s)
+                    
+                if action == SHOOT:
+                    s = p.shoot()
+                    SL.play(4, s=s)
+
+                if action == RESET:
+                    reset = True
+
+                if action == LEFT_KUP and p.change_x < 0:
+                    p.stop()
+                if action == RIGHT_KUP and p.change_x > 0:
+                    p.stop()
+
+        # Update the players.
         active_sprite_list.update()
  
         # Update items in the level
         current_level.update()
  
-        # If the player gets near the right side, shift the world left (-x)
+        # Block players within the left-right boundaries of the world
         for p in [players[index] for index in alive_players]:
 
             if p.rect.right > SCREEN_WIDTH:
                 p.rect.right = SCREEN_WIDTH
      
-            # If the player gets near the left side, shift the world right (+x)
             if p.rect.left < 0:
                 p.rect.left = 0
+            
+            #Kill players that drop below screen
             if p.rect.top >= SCREEN_HEIGHT :
                 p.die(spawns[randint(0,len(spawns)-1)])
      
@@ -888,11 +896,9 @@ def main():
             if players[i].lives <= 0:
                 players[i].lives = 0
                 players[i].kill()
-                NOO.play()
+                SL.play(3)
                 dead_players.append(i)
                 alive_players.remove(i)
-            # else:
-            #     alive.append(1)   
 
         if len(alive_players) == 1:
             win = alive_players[0]
@@ -900,7 +906,7 @@ def main():
 
         if len(alive_players) <= 1 :
             if win_play == False:
-                WINNER.play()
+                SL.play(8)
                 win_play = True
 
 
@@ -908,9 +914,9 @@ def main():
             textname = winfont.render(players[win].name+" WINS !", False, players[win].col)
             textrect = textname.get_rect()
             screen.blit(textname, (SCREEN_WIDTH/2-textrect.width/2, SCREEN_HEIGHT/2))
-            #screen.blit(textname, (SCREEN_WIDTH/2-2*UNIT, SCREEN_HEIGHT/2))
-
+            
             players[win].kill()
+
         else :
             reset = False
 
@@ -929,7 +935,9 @@ def main():
             current_level_no = randint(0,len(all_levels)-1)
             current_level = level_list[current_level_no]
             spawns = all_spawns[current_level_no]
-            rematch(players, current_level, spawns, active_sprite_list, PREPARE[randint(0,len(PREPARE)-1)])
+            rematch(players, current_level, spawns, active_sprite_list)
+            SL.play(randint(5,7))
+
 
         final_screen.blit(pygame.transform.scale(screen, size), (0,0))
         # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
@@ -943,8 +951,6 @@ def main():
 
 
 
-    # Be IDLE friendly. If you forget this line, the program will 'hang'
-    # on exit.
     pygame.quit()
  
 if __name__ == "__main__":
