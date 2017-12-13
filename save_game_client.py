@@ -9,12 +9,17 @@ import sys
 import cPickle as pickle
 import json
 import pygame
+import re
 
 BUFFER = 100
 BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
 
 
 #Event codes
+RESET_KEY = pygame.K_r
+EXIT_KEY = pygame.K_ESCAPE
+
 LEFT = 'l'
 RIGHT = 'r'
 LEFT_KUP = 'm'
@@ -68,6 +73,8 @@ class Client(object):
     
     self.player_id = int(basic_info[0])
     self.nb_players = int(basic_info[1])
+    #take 1st keybinds
+    self.kb = load_keybinds('keybinds.config')[0]
 
     #Wait for the other players
     Go = self.recv_TCP()
@@ -75,8 +82,7 @@ class Client(object):
     print "Connected as"
     print self.player_id
 
-    self.g = threading.Thread(target=self.gameloop, args=())
-    self.g.start()
+    self.gameloop()
 
     #UDP data receiving thread
     #self.t = threading.Thread(target=self.worldinfo_handler_naive, args=())
@@ -115,24 +121,56 @@ class Client(object):
     i = 0
     size = (200,200)#(int(infoObject.current_w/2), int(infoObject.current_h/2))
     final_screen = pygame.display.set_mode(size)
-    pygame.display.set_caption("L'ARENE")
+    pygame.display.set_caption("PLAYER "+str(self.player_id+1))
+    font = pygame.font.SysFont('liberationsans', 20)
     final_screen.fill(BLACK)
 
     while not self.stop:
-      ev = pygame.event.get()
-      for event in ev:
-            if event.type == pygame.QUIT:
-                self.stop = True
-            
-      
+
+      evts = self.get_events()
+
       final_screen.fill(BLACK)
+      textplay = font.render("P"+str(self.player_id+1), False, WHITE)
+      final_screen.blit(pygame.transform.scale(textplay, (150, 150)), (25,25))
       pygame.display.flip()
-      #self.send_playerinfo_naive(json.dumps(ev))
+      self.send_playerinfo_naive(evts)
+
+    self.close()
 
 
 
 
+  def get_events(self):
+    events = ''
+    ev = pygame.event.get()
+    for event in ev:
+      if event.type == pygame.QUIT:
+        self.stop = True
+      if event.type == pygame.KEYDOWN :
+        if event.key == self.kb[1]:
+          events += LEFT
+            
+        if event.key == self.kb[2]:
+          events += RIGHT
 
+        if event.key == self.kb[0]:
+          events += JUMP
+           
+        if event.key == self.kb[3]:
+          events += SHOOT
+        
+        if event.key == EXIT_KEY:
+          events += QUIT 
+        if event.key == RESET_KEY:
+          events += RESET
+
+      if event.type == pygame.KEYUP:
+        if event.key == self.kb[1]:
+          events += LEFT_KUP
+        if event.key == self.kb[2]:
+          events += RIGHT_KUP
+
+    return events
 
 
 
@@ -147,15 +185,32 @@ class Client(object):
     self.stop = True
     #self.t.join()
     #self.u.join()
-    self.g.join()
     self.UDPsock.close()
     self.TCPsock.close()
+
+
+def load_keybinds(filename):
+    keybinds = []
+
+    with open(filename, 'r') as f:
+      lines = f.read().splitlines()
+
+    i=0
+    pat = re.compile("^P\d$")
+    for i in range(len(lines)) :  
+      if pat.match(lines[i]) :
+        kb = []
+        for j in range(1,5):
+          kb.append(getattr(pygame, 'K_'+ lines[i+j].split(':')[1]))
+        keybinds.append(kb)
+    return keybinds
+    
 
 
 if __name__ == '__main__':
   pygame.init()
 
-
-
-  c = Client('', 12345)
+  ip = raw_input('IP du Server : ')
+  port = int(raw_input('Port du Server : '))
+  c = Client(ip, port)
   pygame.quit()

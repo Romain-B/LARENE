@@ -82,6 +82,7 @@ class Server(object):
         #SAVE CLIENT
         self.clients.append((client, s, UDPaddr))
         i+=1
+        print "PLAYER "+str(i)+" CONNECTED !"
 
         self.TCPthreads = []
         self.UDPthreads = []
@@ -95,10 +96,6 @@ class Server(object):
         self.UDPthreads.append(u)
 
       self.TCP_broadcast("Go")
-      #self.start_level()
-      #threading.Thread(target= self.gameloop, args=()).start()
-      #self.char_select()
-      #self.launch()
 
     except error as e:
       for c in self.clients:
@@ -108,23 +105,7 @@ class Server(object):
       self.sock.close()
       raise e
       sys.exit()
-
-  # def gameloop(self):
-  #   while True:
-
-  #     #Data send back to all clients
-  #     data = self.player_UDPdata
-  #     evts = self.events
-
-  #     #Reset event array since events will be sent now
-  #     self.events = []
-  #     evts_string = [str(evts[i])+',' for i in range(self.nb_players)]
-  #     evts_string = str(evts_string[:-1])
-
-
-  #     tosend = str(time.time())+';'+evts_string+';'+str(randint(0, NB_SPAWNS))+';'
-  #     self.UDP_broadcast(tosend)
-      
+ 
 
 
   def TCP_broadcast(self, data):
@@ -148,14 +129,17 @@ class Server(object):
       #dostuff
 
   def UDP_handler(self, UDPsock, UDPaddr, p_id):
+    last_time = 0
     while not self.stop:
       data, a = UDPsock.recvfrom(BUFFER)
       data = data.split(';')
+      time = float(data[0])
       p_id = int(data[1])
 
-      print p_id, data
-
-      self.events[p_id] = data[2]
+      # print p_id, data
+      if time >= last_time:
+        self.events[p_id] += data[2]
+        last_time = time
       #self.player_UDPdata[p_id] = data[2:]
 
   
@@ -166,7 +150,7 @@ class Server(object):
     self.stop = True
     for t in self.TCPthreads:
       t.join()
-    for t in sel.UDPthreads:
+    for u in self.UDPthreads:
       u.join()
 
 

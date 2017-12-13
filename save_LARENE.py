@@ -9,12 +9,15 @@ import pygame
 import sys
 import json
 import re
+import subprocess
 from random import randint
 from save_game_server import Server
  
 # Global constants
  
 SOUND = True
+SERVER_IP = ''
+MAIN_PORT = 12345
 
 # Colors
 BLACK = (0, 0, 0)
@@ -524,7 +527,7 @@ def give_nplayers(final_screen, size):
     return n
 
 
-def menu(S, final_screen, size, all_characters, nplayers, all_kb):
+def menu(S, final_screen, size, all_characters, nplayers):
     screen = pygame.Surface([SCREEN_WIDTH, SCREEN_HEIGHT])
     clock = pygame.time.Clock()
 
@@ -548,19 +551,27 @@ def menu(S, final_screen, size, all_characters, nplayers, all_kb):
         screen.blit(pygame.transform.scale(arn, (SCREEN_HEIGHT, int(0.323*SCREEN_HEIGHT))), ((SCREEN_WIDTH-SCREEN_HEIGHT)/2, UNIT*4))
 
         c = len(chosen)
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == all_kb[c][1]:
-                    i -= 1
-                if event.key == all_kb[c][2]:
-                    i += 1
-                if event.key == all_kb[c][3]:
-                    if i not in chosen.values():
-                        chosen[c]=i
+        evs = ''.join(set(S.events[c]))
+        S.events[c] = ''
+
+        for event in evs:
+        #for event in pygame.event.get():
+            if event == LEFT:
+                i -= 1
+            if event == RIGHT:
+                i += 1
+            if event == SHOOT:
+                if i not in chosen.values():
+                    chosen[c]=i
                     
-                if event.key == EXIT_KEY:
-                    sys.exit()
-            if event.type == pygame.QUIT :
+            if event == EXIT_KEY:
+                S.close()
+                sys.exit()
+
+
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT :
+                S.close()
                 sys.exit()
 
 
@@ -622,6 +633,31 @@ def menu(S, final_screen, size, all_characters, nplayers, all_kb):
         pygame.display.flip()
 
     return chosen
+
+def waitscreen(final_screen, size, nplayers, ip, port):
+    screen = pygame.Surface([SCREEN_WIDTH, SCREEN_HEIGHT])
+
+    dist_from_top = int(0.5*SCREEN_HEIGHT)
+    startleft = SCREEN_WIDTH/2-(5)*4*UNIT
+
+    arn = pygame.image.load('./img/Larene.png')
+    font = pygame.font.SysFont('liberationsans', 4*UNIT)
+    font.set_bold(True)
+
+    screen.fill(BLACK)
+    screen.blit(pygame.transform.scale(arn, (SCREEN_HEIGHT, int(0.323*SCREEN_HEIGHT))), ((SCREEN_WIDTH-SCREEN_HEIGHT)/2, UNIT*4))
+
+    servertext = font.render("Server at "+ip+" : "+str(port), False, WHITE)
+    servertextrect = servertext.get_rect()
+    screen.blit(servertext, (SCREEN_WIDTH/2-servertextrect.width/2,  dist_from_top-2*UNIT))
+
+    playertext = font.render("Waiting for "+str(nplayers)+" Players", False, YELLOW)
+    playertextrect = playertext.get_rect()
+    screen.blit(playertext, (SCREEN_WIDTH/2-playertextrect.width/2,  dist_from_top+8*UNIT))
+
+    final_screen.blit(pygame.transform.scale(screen, size), (0,0))
+    pygame.display.flip()
+
 
 
 
@@ -689,39 +725,37 @@ def load_characters():
     return [char1, char2, char3, char4, char5, char6, char7, char8, charNo, charNo]
 
 
-def get_events(player, key_evs, alive, match_done, done):
+def get_events(evs, key_evs, alive, match_done, done):
     events = ''
-    for event in key_evs:
+    for event in evs:
             if event.type == pygame.QUIT:
                 done = True
-            if event.type == pygame.KEYDOWN :
-                if alive :
-                    if match_done == False:
-                        if event.key == player.kb[1]:
-                            events += LEFT
+
+    for event in key_evs:
+            #if event.type == pygame.KEYDOWN :
+                if not alive or match_done == True:
+                        if event == LEFT:
+                            event = ''
                             
-                        if event.key == player.kb[2]:
-                            events += RIGHT
+                        if event == RIGHT:
+                            event = ''
 
-                        if event.key == player.kb[0]:
-                            events += JUMP
+                        if event == JUMP:
+                            event = ''
                            
-                        if event.key == player.kb[3]:
-                            events += SHOOT
+                        if event == SHOOT:
+                            event = ''
                 
-                if event.key == EXIT_KEY:
+                if event == EXIT_KEY:
                     done = True 
-                if event.key == RESET_KEY:
-                    events += RESET
-                    # reset = True
  
-            if event.type == pygame.KEYUP:
+            # if event.type == pygame.KEYUP:
 
-                if event.key == player.kb[1]:
-                    events += LEFT_KUP
-                if event.key == player.kb[2]:
-                    events += RIGHT_KUP
-    return (events, done)
+            #     if event.key == player.kb[1]:
+            #         events += LEFT_KUP
+            #     if event.key == player.kb[2]:
+            #         events += RIGHT_KUP
+    return (key_evs, done)
 
 
 
@@ -771,27 +805,29 @@ def main():
     all_players = load_characters()
     
     #Read the keybinds from keybinds.config
-    all_kb = load_keybinds('keybinds.config')
+    #all_kb = load_keybinds('keybinds.config')
     
 
     nplayers = give_nplayers(final_screen, size)
 
 
+
 #RESEAU
-    S = Server('', 12345,nplayers)
+    S = Server(SERVER_IP, MAIN_PORT, nplayers)
+    #get localhost ip if server is localhostes
+    ip = re.findall( r'[0-9]+(?:\.[0-9]+){3}', subprocess.check_output(['ifconfig', 'wlp2s0']))[0] if SERVER_IP == '' else SERVER_IP
+    waitscreen(final_screen, size, nplayers, ip, MAIN_PORT)
     S.start_server()
 
 
-
-
     #char select
-    chosen = menu(S, final_screen, size, all_players, nplayers, all_kb)
+    chosen = menu(S, final_screen, size, all_players, nplayers)
 
     players = []
 
     for i in range(nplayers):
         players.append(all_players[chosen[i]])
-        players[i].set_kb(all_kb[i])
+        #players[i].set_kb(all_kb[i])
 
 
     # Read levels and spawns from levels.config
@@ -840,8 +876,10 @@ def main():
     while not done:
         
         all_events = []
-        key_events = S.events #pygame.event.get()
+        key_events = S.events 
         S.events = ['']*nplayers
+
+        server_events = pygame.event.get()
 
         #Get the events
 
@@ -851,7 +889,7 @@ def main():
                 alive = True
             else : 
                 alive = False
-            events, done = get_events(p, key_events, alive, match_done, done)
+            events, done = get_events(server_events, ''.join(set(key_events[i])), alive, match_done, done)
             all_events.append(events)
 
         #Apply/Interpret the events
@@ -874,6 +912,9 @@ def main():
 
                 if action == RESET:
                     reset = True
+
+                if action == QUIT:
+                    done = True
 
                 if action == LEFT_KUP and p.change_x < 0:
                     p.stop()
@@ -973,6 +1014,7 @@ def main():
 
 
     pygame.quit()
+    S.close()
  
 if __name__ == "__main__":
     main()
