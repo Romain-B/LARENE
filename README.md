@@ -10,6 +10,8 @@ Just go to the folder in terminal and execute `python LARENE.py`
 Choose a machine to host the server on which you launch `python save_LARENE.py` and select the number of players with arrow keys and <ENTER>.
 The server IP (localhost of the machine by default) and port (12345 by default) will be announced on screen.
 
+<img src="https://raw.githubusercontent.com/Romain-B/LARENE/master/img/server_wait.png" width="400">
+
 Each player on their own machine then launches `python save_game_client.py` (one can be on the server but the small window made by the client will need to be on foreground).
 When everyone is connected, player selection occurs (by player number order) and game starts !
 
