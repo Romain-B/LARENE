@@ -76,7 +76,7 @@ RIGHT_KUP = 'n'
 JUMP = 'j'
 SHOOT = 's'
 RESET = 'x'
-
+QUIT = 'q'
 
 class SoundLibrary(object):
     """docstring for SoundLibrary"""
