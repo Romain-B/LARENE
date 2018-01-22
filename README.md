@@ -15,7 +15,7 @@ The server IP (localhost of the machine by default) and port (12345 by default) 
 Each player on their own machine then launches `python save_game_client.py` (one can be on the server but the small window made by the client will need to be on foreground).
 When everyone is connected, player selection occurs (by player number order) and game starts !
 
-**Note :** For those in the BIMcave (you know who you are). You must set the `IN_BIMCAVE` variable to `True` in `save_LARENE.py`(The command used in the script to get the local ip for the server is different from typical machines).
+**Note : For those in the BIMcave** (you know who you are). You must set the `IN_BIMCAVE` variable to `True` in `save_LARENE.py`(The command used in the script to get the local ip for the server is different from typical machines).
 
 **Note 2 :** If you get an error like the following :`pygame.error: No available audio device`, set the `SOUND` variable to `False` in `save_LARENE.py`. It's regrettable but you'll play with no sound. You can also use this variable to mute the game even if you do have an audio output.
 
