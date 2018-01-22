@@ -21,6 +21,7 @@ MAIN_PORT = 12345
 
 # Colors
 BLACK = (0, 0, 0)
+LIGHT_GREY = (160,160,160)
 GREY = (50,50,50)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -720,9 +721,10 @@ def load_characters():
     char6 = Player('Superdev', PURPLE, 1, sprite='./img/supdev.png', cit=u"You don't fuck with the Super Developper")
     char7 = Player(u"L'Abbé Dai", ORANGE, 0, sprite='./img/ACP.png', cit=u"L'Abbé Dai est ACPté.")
     char8 = Player("Blatteman", BROWN, 0, sprite='./img/blatteman.png', cit=u"Le seul VRAI habitant de la cave...")
+    char9 = Player("Anne 'o Taton", LIGHT_GREY, 0, sprite="./img/Anneotaton.png", cit=u"SSSHHHHHHHT !!")
     charNo = Player('NOPLAYER', WHITE, 0, sprite='./img/noplayer.png')
 
-    return [char1, char2, char3, char4, char5, char6, char7, char8, charNo, charNo]
+    return [char1, char2, char3, char4, char5, char6, char7, char8, char9, charNo]
 
 
 def get_events(evs, key_evs, alive, match_done, done):
