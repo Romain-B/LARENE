@@ -12,8 +12,9 @@ The server IP (localhost of the machine by default) and port (12345 by default) 
 
 <img src="https://raw.githubusercontent.com/Romain-B/LARENE/master/img/server_wait.png" width="400">
 
-Each player on their own machine then launches `python save_game_client.py` (one can be on the server but the small window made by the client will need to be on foreground).
+Each player on their own machine then launches `python save_client.py` (one can be on the server but the small window made by the client will need to be on foreground).
 When everyone is connected, player selection occurs (by player number order) and game starts !
+Once everyone is dead, one of the players presses <R> and another round starts. End game by pressing <ESC>.
 
 **Note : For those in the BIMcave** (you know who you are). You must set the `IN_BIMCAVE` variable to `True` in `save_LARENE.py`(The command used in the script to get the local ip for the server is different from typical machines).
 
