@@ -15,8 +15,11 @@ from save_game_server import Server
  
 # Global constants
  
+
+IN_BIMCAVE = False
 SOUND = True
-SERVER_IP = ''
+
+SERVER_IP = ''  # Localhost of server machine by default
 MAIN_PORT = 12345
 
 # Colors
@@ -817,7 +820,10 @@ def main():
 #RESEAU
     S = Server(SERVER_IP, MAIN_PORT, nplayers)
     #get localhost ip if server is localhostes
-    ip = re.findall( r'[0-9]+(?:\.[0-9]+){3}', subprocess.check_output(['ifconfig', 'wlp2s0']))[0] if SERVER_IP == '' else SERVER_IP
+    if IN_BIMCAVE == True:
+      ip = re.findall( r'[0-9]+(?:\.[0-9]+){3}', subprocess.check_output(['/sbin/ifconfig', 'eth0']))[0] if SERVER_IP == '' else SERVER_IP
+    else :
+      ip = re.findall( r'[0-9]+(?:\.[0-9]+){3}', subprocess.check_output(['ifconfig', 'wlp2s0']))[0] if SERVER_IP == '' else SERVER_IP
     waitscreen(final_screen, size, nplayers, ip, MAIN_PORT)
     S.start_server()
 
