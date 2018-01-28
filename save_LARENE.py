@@ -96,11 +96,16 @@ class SoundLibrary(object):
         G2 = pygame.mixer.Sound('./sound_fx/grunt2.ogg')
         G2.set_volume(0.6)
         G3 = pygame.mixer.Sound('./sound_fx/grunt3.ogg')
+        CHUT = pygame.mixer.Sound('./sound_fx/chut.ogg')
+        BAS = pygame.mixer.Sound('./sound_fx/bastien2.ogg')
+        DUD = pygame.mixer.Sound('./sound_fx/abd1.ogg')
+        DUD.set_volume(1.2)
         NOO = pygame.mixer.Sound('./sound_fx/nooo.ogg')
         NOO.set_volume(0.3)
         PEW = pygame.mixer.Sound('./sound_fx/pew.ogg')
 
-        PREPARE = [pygame.mixer.Sound('./sound_fx/prepare.ogg'), pygame.mixer.Sound('./sound_fx/prepare2.ogg'), pygame.mixer.Sound('./sound_fx/prepare3.ogg')]
+        PREPARE = [pygame.mixer.Sound('./sound_fx/prepare.ogg'), pygame.mixer.So
+und('./sound_fx/prepare2.ogg'), pygame.mixer.Sound('./sound_fx/prepare3.ogg')]
         WINNER = pygame.mixer.Sound('./sound_fx/winner.ogg')
 
         self.sounds =  [G1,                 #0
@@ -111,7 +116,10 @@ class SoundLibrary(object):
                         PREPARE[0],         #5
                         PREPARE[1],         #6
                         PREPARE[2],         #7
-                        WINNER              #8
+                        WINNER,              #8
+                        CHUT,               #9
+                        BAS,                #10
+                        DUD,                #11
                         ]
     def play(self, i, s=True):
         if s == True and SOUND == True :
@@ -719,12 +727,12 @@ def load_characters():
     char1 = Player('Gwendal', RED, 0, sprite='./img/gwendal.png', cit="GwendaaaaaaAAAAAAaaaaal !!")
     char2 = Player(u'El Péhème', BLUE, 1, sprite='./img/elpeheme.png', cit=u"On va les éclater, et quand je dis on, c'est plutôt moi..." )
     char3 = Player('Huberr', GREEN, 1, sprite='./img/huberr.png', cit = u"Je pense qu'on sait pas trop encore qui va gagner")
-    char4 = Player('Bastien', PINK, 2, sprite='./img/bastien.png', cit = u"GroOmpF !")
+    char4 = Player('Bastien', PINK, 10, sprite='./img/bastien.png', cit = u"GroOmpF !")
     char5 = Player('Mr.Punchline', YELLOW, 0, sprite='./img/mrpunchline.png', cit=u"L'ARENE est une aventure dont on ne sort pas vivant.")
     char6 = Player('Superdev', PURPLE, 1, sprite='./img/supdev.png', cit=u"You don't fuck with the Super Developper")
-    char7 = Player(u"L'Abbé Dai", ORANGE, 0, sprite='./img/ACP.png', cit=u"L'Abbé Dai est ACPté.")
+    char7 = Player(u"L'Abbé Dai", ORANGE, 11, sprite='./img/ACP.png', cit=u"L'Abbé Dai est ACPté.")
     char8 = Player("Blatteman", BROWN, 0, sprite='./img/blatteman.png', cit=u"Le seul VRAI habitant de la cave...")
-    char9 = Player("Anne 'o Taton", LIGHT_GREY, 0, sprite="./img/Anneotaton.png", cit=u"SSSHHHHHHHT !!")
+    char9 = Player("Anne 'o Taton", LIGHT_GREY, 9, sprite="./img/Anneotaton.png", cit=u"SSSHHHHHHHT !!")
     charNo = Player('NOPLAYER', WHITE, 0, sprite='./img/noplayer.png')
 
     return [char1, char2, char3, char4, char5, char6, char7, char8, char9, charNo]
