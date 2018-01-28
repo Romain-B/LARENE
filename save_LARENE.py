@@ -104,8 +104,7 @@ class SoundLibrary(object):
         NOO.set_volume(0.3)
         PEW = pygame.mixer.Sound('./sound_fx/pew.ogg')
 
-        PREPARE = [pygame.mixer.Sound('./sound_fx/prepare.ogg'), pygame.mixer.So
-und('./sound_fx/prepare2.ogg'), pygame.mixer.Sound('./sound_fx/prepare3.ogg')]
+        PREPARE = [pygame.mixer.Sound('./sound_fx/prepare.ogg'), pygame.mixer.Sound('./sound_fx/prepare2.ogg'), pygame.mixer.Sound('./sound_fx/prepare3.ogg')]
         WINNER = pygame.mixer.Sound('./sound_fx/winner.ogg')
 
         self.sounds =  [G1,                 #0
